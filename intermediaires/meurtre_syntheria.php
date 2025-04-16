@@ -37,8 +37,7 @@ $suspects = ['nom:Pierre,yeux:noir,cheveux:chatain,taille:petit,poids:enrobe', '
 //== NE PAS TOUCHER
 
 $listeSuspects = [];
-$listeIndicesPlus = [];
-$listeIndicesMoins = [];
+$listeIndices = [];
 $nombreIndices = 0;
 
 foreach ($suspects as $suspect) {
@@ -73,75 +72,63 @@ foreach ($suspects as $suspect) {
 foreach ($indices as $indice) {
     $elements = explode("_", $indice);
     $trait = $elements[0];
-    $bolleen = $elements[1];
+    $booleen = $elements[1];
     $adjectif = $elements[2];
 
-    $objectIndice = new indice($trait, $adjectif);
+    $objectIndice = new indice($trait, $booleen, $adjectif);
+    $listeIndices[] = $objectIndice;
 
-    if ($bolleen == "is") {
-        $listeIndicesPlus[] = $objectIndice;
-
-    } else {
-        $listeIndicesMoins[] = $objectIndice;
-    }
 }
 
-foreach ($listeIndicesMoins as $indice) {
-    if (count($listeIndicesMoins) > 1) {
+foreach ($listeIndices as $indice) {
+    if (count($listeSuspects) > 1) {
         $nombreIndices++;
         foreach ($listeSuspects as $key => $suspect) {
 
             switch ($indice->strait) {
                 case"yeux":
-                    if ($suspect->getYeux() == $indice->adjectif) {
-                        unset($listeSuspects[$key]);
+                    if ($indice->booleen == "is") {
+                        if ($suspect->getYeux() != $indice->adjectif) {
+                            unset($listeSuspects[$key]);
+                        }
+                    } elseif ($indice->booleen == "not") {
+                        if ($suspect->getYeux() == $indice->adjectif) {
+                            unset($listeSuspects[$key]);
+                        }
                     }
                     break;
-                case"cheveux":
-                    if ($suspect->getCheveux() == $indice->adjectif) {
-                        unset($listeSuspects[$key]);
-                    }
-                    break;
-                case"taille":
-                    if ($suspect->getTaille() == $indice->adjectif) {
-                        unset($listeSuspects[$key]);
-                    }
-                    break;
-                case"poids":
-                    if ($suspect->getPoids() == $indice->adjectif) {
-                        unset($listeSuspects[$key]);
-                    }
-                    break;
-            }
-
-        }
-    }
-
-}
-
-foreach ($listeIndicesPlus as $indice) {
-    if (count($listeIndicesPlus) > 1) {
-        $nombreIndices++;
-        foreach ($listeSuspects as $key => $suspect) {
-            switch ($indice->strait) {
-                case"yeux":
-                    if ($suspect->getYeux() != $indice->adjectif) {
-                        unset($listeSuspects[$key]);
-                    }
-                    break;
-                case"cheveux":
-                    if ($suspect->getCheveux() != $indice->adjectif) {
-                        unset($listeSuspects[$key]);
+                case
+                "cheveux":
+                    if ($indice->booleen == "is") {
+                        if ($suspect->getCheveux() != $indice->adjectif) {
+                            unset($listeSuspects[$key]);
+                        }
+                    } elseif ($indice->booleen == "not") {
+                        if ($suspect->getCheveux() == $indice->adjectif) {
+                            unset($listeSuspects[$key]);
+                        }
                     }
                     break;
                 case"taille":
-                    if ($suspect->getTaille() != $indice->adjectif) {
-                        unset($listeSuspects[$key]);
+                    if ($indice->booleen == "is") {
+                        if ($suspect->getTaille() != $indice->adjectif) {
+                            unset($listeSuspects[$key]);
+                        }
+                    } elseif ($indice->booleen == "not") {
+                        if ($suspect->getTaille() == $indice->adjectif) {
+                            unset($listeSuspects[$key]);
+                        }
                     }
                     break;
                 case"poids":
-                    if ($suspect->getPoids() != $indice->adjectif) {
-                        unset($listeSuspects[$key]);
+                    if ($indice->booleen == "is") {
+                        if ($suspect->getPoids() != $indice->adjectif) {
+                            unset($listeSuspects[$key]);
+                        }
+                    } elseif ($indice->booleen == "not") {
+                        if ($suspect->getPoids() == $indice->adjectif) {
+                            unset($listeSuspects[$key]);
+                        }
                     }
                     break;
             }
@@ -150,18 +137,20 @@ foreach ($listeIndicesPlus as $indice) {
 }
 
 foreach ($listeSuspects as $suspect) {
-    echo $suspect->getNom()."_".$nombreIndices;
+    echo $suspect->getNom() . "_" . $nombreIndices;
 }
 
 
 class indice
 {
     public string $strait;
+    public string $booleen;
     public string $adjectif;
 
-    public function __construct(string $strait, string $adjectif)
+    public function __construct(string $strait, string $booleen, string $adjectif)
     {
         $this->strait = $strait;
+        $this->booleen = $booleen;
         $this->adjectif = $adjectif;
     }
 
