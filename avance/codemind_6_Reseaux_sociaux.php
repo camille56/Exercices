@@ -122,7 +122,7 @@ function impactRecursif(bool $premierImpact, string $cible, int $impact, array $
     $lettreImpact = $cible[0]; // P ou N
     $lettrePersonneCible = $cible[1];  // lettre de la personne cible
     $cibles = array();
-    $tabkeauDeCibles=array();
+    $tableauDeCibles=array();
 
     if ($impact <= 0) {
         return;
@@ -143,13 +143,13 @@ function impactRecursif(bool $premierImpact, string $cible, int $impact, array $
             foreach ($listePersonnes as $personne) {
                 if ($personne->id == $lettrePersonneCible) {
                     $personne->sante = $personne->sante - $impact;
-                    $tabkeauDeCibles[] = $personne->cibles;
+                    $tableauDeCibles[] = $personne->cibles;
                 }
             }
         }
 
     }
-    foreach ($tabkeauDeCibles as $cibles) {
+    foreach ($tableauDeCibles as $cibles) {
         foreach ($cibles as $cible) {
             $premierImpact = false;
             impactRecursif($premierImpact, $cible, $impact - 1, $listePersonnes);
