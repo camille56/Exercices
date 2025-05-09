@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * Si tu ne l’as pas encore fait, tu peux commencer par Petits monstres mignons #1, le code créé pour ce premier challenge te servira pour celui-ci.
  *
@@ -74,7 +75,7 @@ foreach ($dicoAliments as $aliment) {
     //On récupère le monstre le plus petit qui peut manger cet aliment.
     $monstre = TrouverLeMonstreLePlusPetitPourAliment($listeMonstres, $nomAliment);
 
-    if(!empty($monstre)){
+    if (!empty($monstre)) {
         $coefA = $monstre->formule[0];
         $coefB = $monstre->formule[2];
         $poidsSupplementaire = calculPriseDePoids($poidsAliment, $coefA, $coefB);
@@ -93,8 +94,7 @@ function trouverLeMonstreLePlusLourd(array $listeMonstre): Monstre
         // Si le poids est plus grand, on remplace directement
         if ($monstre->poids > $monstrePlusLourd->poids) {
             $monstrePlusLourd = $monstre;
-        }
-        // En cas d'égalité de poids
+        } // En cas d'égalité de poids
         elseif ($monstre->poids == $monstrePlusLourd->poids) {
             // Comparaison lexicographique complète, insensible à la casse
             if (strtolower($monstre->nom) < strtolower($monstrePlusLourd->nom)) {
@@ -122,8 +122,8 @@ function TrouverLeMonstreLePlusPetitPourAliment(array $listeMonstre, string $nom
     foreach ($listeMonstresConcordants as $monstre) {
         if ($monstre->poids < $monstrePlusPetit->poids) {
             $monstrePlusPetit = $monstre;
-        }elseif ($monstre->poids==$monstrePlusPetit->poids){
-            if (strtolower($monstre->nom)<strtolower($monstrePlusPetit->nom)){
+        } elseif ($monstre->poids == $monstrePlusPetit->poids) {
+            if (strtolower($monstre->nom) < strtolower($monstrePlusPetit->nom)) {
                 $monstrePlusPetit = $monstre;
             }
         }
