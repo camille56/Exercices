@@ -55,7 +55,7 @@ for ($i = 0; $i < 10; $i++) {
     }
 }
 
-//on place les mouches sur les cases. On Ne place pas l'araignée sur la toile, elle possède ses coordonnées.
+//on place les mouches sur les cases. On ne place pas l'araignée sur la toile, elle possède ses coordonnées.
 foreach ($toile as $case) {
     foreach ($listeMouches as $mouche) {
         if ($case->position_X == $mouche->positionX && $case->position_Y == $mouche->positionY) {
@@ -63,37 +63,139 @@ foreach ($toile as $case) {
         }
     }
 }
+$boucle = true;
+while ($boucle) {
 
+    $coordonesProchaineCible = rechercheCoordonesMoucheProche($toile, $araignee);
 
+    deplacement($araignee, $coordonesProchaineCible['x'], $coordonesProchaineCible['y']);
 
-//fonction recherche la mouche la plus proche
-//pour toutes les coordonées de mouche, on soustrait celle de la mouche et la plus faible est la plus près
-function rechercheMouchePlusProche(array $toile, Araignee $araignee)
-{
-    $prochaineCible=null;
-    $diff_x_plus_petite=0;
-    $diff_y_plus_petite=0;
+    //peut elle emballer la mouche?
+    $coordonesX = $araignee->position_X;
+    $coordonesY = $araignee->position_Y;
+    $mouche = $toile[$coordonesX][$coordonesY]->mouche;
+    if ($araignee->energie > $mouche->taille * 2 && !$mouche->emballer && !$mouche->mangee) {
+        emballerMouche($toile, $araignee, $coordonesX, $coordonesY);
+    } else {
+        $coordonesProchaineCible = rechercheCoordonesMoucheProche($toile, $araignee, true);
+        deplacement($araignee, $coordonesProchaineCible['x'], $coordonesProchaineCible['y']);
+        mangerMouche($mouche, $araignee);
+    }
+
     foreach ($toile as $case) {
-        if ($case->mouche != null) {
+        if ($case->mouche!==null && !$case->mouche->emballer ) {
+            $boucle=false;
+        }
+    }
+}
+echo $araignee->energie;
+
+
+/**
+ * Recherche les coordonnées de la mouche la plus proche sur une toile, en fonction de l'état de l'araignée
+ * et du statut des mouches (emballée ou non). Si plusieurs mouches sont à la même distance, celle avec
+ * l'ID le plus bas sera sélectionnée.
+ *
+ * @param array $toile Une matrice représentant la toile, où chaque case peut contenir une mouche.
+ * @param Araignee $araignee L'instance de l'araignée recherchant la mouche, avec sa position actuelle.
+ * @param bool $emballer Indique si la recherche doit viser les mouches emballées (true) ou non emballées (false).
+ * @return array Les coordonnées `x` et `y` de la mouche la plus proche sous la forme d'un tableau associatif.
+ */
+function rechercheCoordonesMoucheProche(array $toile, Araignee $araignee, bool $emballer = false): array
+{
+
+
+    $coordonesProchaineCible = ['x' => 0, 'y' => 0];
+    foreach ($toile as $case) {
+        $nombreMouvementsPlusPetit = 100;
+        //selon le paramètre de la fonction, on cherche des mouches emballées ou non.
+        if ($case->mouche != null && $case->mouche->emballer == $emballer && !$case->mouche->mangee) {
             $position_X_mouche = $case->mouche->positionX;
             $position_Y_mouche = $case->mouche->positionY;
 
             $diff_x = $position_X_mouche - $araignee->position_X;
             $diff_y = $position_Y_mouche - $araignee->position_Y;
+            $nombreMouvementsActuel = $diff_x + $diff_y;
 
-            if ($diff_x < $diff_x_plus_petite || $diff_x == $diff_x_plus_petite ) {
-                $diff_x_plus_petite = $diff_x;
-            }
-            if ($diff_y < $diff_y_plus_petite || $diff_y == $diff_y_plus_petite ) {
-                $diff_y_plus_petite = $diff_y;
+            if ($nombreMouvementsActuel <= $nombreMouvementsPlusPetit) {
+                $nombreMouvementsPlusPetit = $nombreMouvementsActuel;
+                $coordonesProchaineCible['x'] = $position_X_mouche;
+                $coordonesProchaineCible['y'] = $position_Y_mouche;
+                $idMoucheProchaineCible = $case->mouche->id;
+
+                //Si deux mouches sont à égal distance alors, on prend celle avec l'id le plus faible.
+                if ($nombreMouvementsActuel == $nombreMouvementsPlusPetit) {
+                    $idMouche = $case->mouche->id;
+                    if ($idMouche < $idMoucheProchaineCible) {
+                        $coordonesProchaineCible['x'] = $position_X_mouche;
+                        $coordonesProchaineCible['y'] = $position_Y_mouche;
+                        $idMoucheProchaineCible = $idMouche;
+                    }
+                }
+
             }
         }
     }
+    return $coordonesProchaineCible;
 }
 
-//fonction déplacement (avec perte d'energie)
 
-//fonction mangeLaMouche (il faudra sortir la mouche de la toile)
+/**
+ * Effectue le déplacement de l'araignée vers une nouvelle position donnée, tout en ajustant
+ * son énergie en fonction de la distance parcourue.
+ *
+ * @param Araignee $araignee L'araignée qui doit être déplacée, avec sa position et son énergie actuelles.
+ * @param int $x La coordonnée X de la nouvelle position cible.
+ * @param int $y La coordonnée Y de la nouvelle position cible.
+ * @return void Cette méthode ne retourne aucune valeur.
+ */
+function deplacement(Araignee $araignee, int $x, int $y): void
+{
+    $differenceX = $x - $araignee->position_X;
+    $differenceY = $y - $araignee->position_Y;
+    $nombreDeplacement = $differenceX + $differenceY;
+
+    $araignee->energie = $araignee->energie - $nombreDeplacement;
+    $araignee->position_X = $x;
+    $araignee->position_Y = $y;
+}
+
+
+/**
+ * Emballe une mouche présente sur la toile à une position donnée, ce qui réduit l'énergie de l'araignée.
+ * L'énergie perdue par l'araignée est égale à deux fois la taille de la mouche.
+ *
+ * @param array $toile La matrice représentant la toile avec toutes les cases et les mouches.
+ * @param Araignee $araignee L'araignée qui emballe la mouche, son énergie sera réduite.
+ * @param int $x La coordonnée X de la position de la mouche à emballer.
+ * @param int $y La coordonnée Y de la position de la mouche à emballer.
+ * @return void Cette méthode ne retourne aucune valeur.
+ */
+function emballerMouche(array $toile, Araignee $araignee, int $x, int $y): void
+{
+    $mouche = $toile[$x][$y]->mouche;
+    $araignee->energie = $araignee->energie - ($mouche->taille * 2);
+    $toile[$x][$y]->mouche->emballer = true;
+
+}
+
+/**
+ * Permet à l'araignée de manger une mouche pour regagner de l'énergie.
+ * L'énergie gagnée est égale à 5 plus 5 fois la taille de la mouche.
+ * La mouche est marquée comme mangée après cette opération.
+ *
+ * @param Mouche $mouche La mouche qui va être mangée par l'araignée.
+ * @param Araignee $araignee L'araignée qui mange la mouche, son énergie sera augmentée.
+ * @return void Cette méthode ne retourne aucune valeur.
+ */
+function mangerMouche(Mouche $mouche, Araignee $araignee): void
+{
+
+    $energieGagnee = ($mouche->taille * 5)+5;
+    $araignee->energie = $araignee->energie + $energieGagnee;
+    $mouche->mangee = true;
+
+}
 
 class CaseToile
 {
