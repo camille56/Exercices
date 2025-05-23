@@ -26,7 +26,7 @@
  */
 
 //== NE PAS TOUCHER
-$flies = ['5;3:6:6', '6;1:6:5', '1;2:8:6', '8;1:9:4', '4;3:9:2', '3;1:4:0', '7;1:1:2', '2;1:0:1'];
+$flies = ['6;5:9:7', '3;2:4:8', '7;2:6:4', '2;1:4:5', '8;4:4:9', '5;1:3:5', '4;3:1:5', '1;2:1:1'];
 //== NE PAS TOUCHER
 
 
@@ -66,24 +66,32 @@ foreach ($toile as $case) {
 $moucheNonEmballe = true;
 while ($moucheNonEmballe) {
 
-    $coordonesProchaineCible = rechercheCoordonesMoucheProche($toile, $araignee);
+    $coordonneesProchaineCible = rechercheCoordonneesMoucheProche($toile, $araignee);
+    if (!empty($coordonneesProchaineCible)) {
 
-    deplacement($araignee, $coordonesProchaineCible['x'], $coordonesProchaineCible['y']);
+        deplacement($araignee, $coordonneesProchaineCible['x'], $coordonneesProchaineCible['y']);
 
-    $coordonesX = $araignee->position_X;
-    $coordonesY = $araignee->position_Y;
+        $coordonneesX = $araignee->position_X;
+        $coordonneesY = $araignee->position_Y;
 
-    //On selectionne la mouche sur la case ou se trouve l'araignée.
-    $mouche = getMoucheSurCase($toile, $coordonesX, $coordonesY);
+        //On selectionne la mouche sur la case ou se trouve l'araignée.
+        $mouche = getMoucheSurCase($toile, $coordonneesX, $coordonneesY);
 
-    //si elle peut emballer la mouche, elle le fait. sinon elle cherche une mouche emballée à manger.
-    if ($araignee->energie > $mouche->taille * 2 && !$mouche->emballer && !$mouche->mangee) {
-        emballerMouche($toile, $araignee, $coordonesX, $coordonesY);
-    } else {
-        $coordonesProchaineCible = rechercheCoordonesMoucheProche($toile, $araignee, true);
-        if (!empty($coordonesProchaineCible)) {
-            deplacement($araignee, $coordonesProchaineCible['x'], $coordonesProchaineCible['y']);
-            mangerMouche($mouche, $araignee);
+        //si elle peut emballer la mouche, elle le fait. sinon elle cherche une mouche emballée à manger.
+        if ($araignee->energie > $mouche->taille * 3 && !$mouche->emballer && !$mouche->mangee) {
+            emballerMouche($toile, $araignee, $coordonneesX, $coordonneesY);
+        } else {
+            $coordonneesProchaineCible = rechercheCoordonneesMoucheProche($toile, $araignee, true);
+            if (!empty($coordonneesProchaineCible)) {
+                deplacement($araignee, $coordonneesProchaineCible['x'], $coordonneesProchaineCible['y']);
+                //après le déplacement, on récupère la mouche sur la nouvelle case.
+                $coordonneesX = $araignee->position_X;
+                $coordonneesY = $araignee->position_Y;
+                $mouche = getMoucheSurCase($toile, $coordonneesX, $coordonneesY);
+                if ($mouche->emballer && !$mouche->mangee) {
+                    mangerMouche($mouche, $araignee);
+                }
+            }
         }
     }
 
@@ -109,12 +117,12 @@ echo $araignee->energie;
  * @param bool $emballer Indique si la recherche doit viser les mouches emballées (true) ou non emballées (false).
  * @return array Les coordonnées `x` et `y` de la mouche la plus proche sous la forme d'un tableau associatif.
  */
-function rechercheCoordonesMoucheProche(array $toile, Araignee $araignee, bool $emballer = false): array
+function rechercheCoordonneesMoucheProche(array $toile, Araignee $araignee, bool $emballer = false): array
 {
 
 
-    $coordonesProchaineCible = ['x' => 0, 'y' => 0];
-    $nombreMouvementsPlusPetit = 100;
+    $coordonneesProchaineCible = ['x' => 0, 'y' => 0];
+    $nombreMouvementsPlusPetit = PHP_INT_MAX;
     foreach ($toile as $case) {
 
         //selon le paramètre de la fonction, on cherche des mouches emballées ou non.
@@ -129,16 +137,16 @@ function rechercheCoordonesMoucheProche(array $toile, Araignee $araignee, bool $
 
             if ($nombreMouvementsActuel < $nombreMouvementsPlusPetit) {
                 $nombreMouvementsPlusPetit = $nombreMouvementsActuel;
-                $coordonesProchaineCible['x'] = $position_X_mouche;
-                $coordonesProchaineCible['y'] = $position_Y_mouche;
+                $coordonneesProchaineCible['x'] = $position_X_mouche;
+                $coordonneesProchaineCible['y'] = $position_Y_mouche;
                 $idMoucheProchaineCible = $case->mouche->id;
             }
             //Si deux mouches sont à égal distance alors, on prend celle avec l'id le plus faible.
             if ($nombreMouvementsActuel == $nombreMouvementsPlusPetit) {
                 $idMouche = $case->mouche->id;
                 if ($idMouche < $idMoucheProchaineCible) {
-                    $coordonesProchaineCible['x'] = $position_X_mouche;
-                    $coordonesProchaineCible['y'] = $position_Y_mouche;
+                    $coordonneesProchaineCible['x'] = $position_X_mouche;
+                    $coordonneesProchaineCible['y'] = $position_Y_mouche;
                     $idMoucheProchaineCible = $idMouche;
                 }
             }
@@ -146,7 +154,7 @@ function rechercheCoordonesMoucheProche(array $toile, Araignee $araignee, bool $
 
         }
     }
-    return $coordonesProchaineCible;
+    return $coordonneesProchaineCible;
 }
 
 
@@ -163,7 +171,7 @@ function deplacement(Araignee $araignee, int $x, int $y): void
 {
     $differenceX = $x - $araignee->position_X;
     $differenceY = $y - $araignee->position_Y;
-    $nombreDeplacement = $differenceX + $differenceY;
+    $nombreDeplacement = abs($differenceX) + abs($differenceY);
 
     $araignee->energie = $araignee->energie - $nombreDeplacement;
     $araignee->position_X = $x;
@@ -184,7 +192,7 @@ function deplacement(Araignee $araignee, int $x, int $y): void
 function emballerMouche(array $toile, Araignee $araignee, int $x, int $y): void
 {
     $mouche = getMoucheSurCase($toile, $x, $y);
-    if (!empty($mouche)) {
+    if ($mouche!==null && $mouche->emballer === false) {
         $araignee->energie = $araignee->energie - ($mouche->taille * 2);
         $mouche->emballer = true;
     }
@@ -208,11 +216,11 @@ function mangerMouche(Mouche $mouche, Araignee $araignee): void
 
 }
 
-function getMoucheSurCase(array $toile, int $coordonesX, int $coordonesY): Mouche
+function getMoucheSurCase(array $toile, int $coordonneesX, int $coordonneesY): ?Mouche
 {
     $mouche = null;
     foreach ($toile as $case) {
-        if ($case->position_X == $coordonesX && $case->position_Y == $coordonesY && $case->mouche !== null && !$case->mouche->emballer) {
+        if ($case->position_X == $coordonneesX && $case->position_Y == $coordonneesY && $case->mouche !== null) {
             $mouche = $case->mouche;
         }
     }
